@@ -1,0 +1,18 @@
+{
+  "experiment_id": "map_medium_plan_execute_789_1234567890",
+  "map": "map_medium",
+  "strategy": "plan_execute",
+  "seed": 789,
+  "ticks": 189,
+  "runtime_seconds": 16.5,
+  "rescued": 12,
+  "deaths": 2,
+  "avg_rescue_time": 34.5,
+  "fires_extinguished": 6,
+  "roads_cleared": 3,
+  "energy_used": 54,
+  "tool_calls": 17,
+  "invalid_json": 0,
+  "replans": 1,
+  "hospital_overflow_events": 1
+}

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrisisSim - Disaster Response Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
+        }
+        
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #4fc3f7;
+            border-bottom: 2px solid #4fc3f7;
+            padding-bottom: 5px;
+        }
+        
+        .simulation-area {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            aspect-ratio: 1/1;
+            max-height: 600px;
+        }
+        
+        .cell {
+            background: #455a64;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 5px #fff;
+            z-index: 2;
+        }
+        
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #546e7a;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .controls {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            background: #2196f3;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            background: #1e88e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        
+        #start-btn {
+            background: #4caf50;
+        }
+        
+        #start-btn:hover {
+            background: #43a047;
+        }
+        
+        #pause-btn {
+            background: #ff9800;
+        }
+        
+        #pause-btn:hover {
+            background: #f57c00;
+        }
+        
+        #reset-btn {
+            background: #f44336;
+        }
+        
+        #reset-btn:hover {
+            background: #e53935;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid #fff;
+        }
+        
+        /* Element colors */
+        .drone { background: #9c27b0; }
+        .medic { background: #2196f3; }
+        .truck { background: #ff9800; }
+        .survivor { background: #4caf50; }
+        .hospital { background: #f44336; }
+        .fire { background: #ff5722; }
+        .rubble { background: #795548; }
+        .depot { background: #607d8b; }
+        .road { background: #455a64; }
+        .building { background: #78909c; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .status-connected { background: #4caf50; }
+        .status-disconnected { background: #f44336; }
+        .status-connecting { background: #ff9800; }
+        
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-container {
+                aspect-ratio: unset;
+                height: 400px;
+                grid-template-columns: repeat(15, 1fr);
+                grid-template-rows: repeat(15, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CrisisSim - Disaster Response Simulation</h1>
+            <p>Simulate disaster response operations and manage resources effectively
+                <span id="status">Disconnected</span>
+                <span class="status-indicator status-disconnected" id="status-indicator"></span>
+            </p>
+        </header>
+        
+        <main class="simulation-area">
+            <h2>Simulation Grid</h2>
+            <div class="grid-container" id="grid">
+                <!-- Grid will be generated by JavaScript -->
+            </div>
+        </main>
+        
+        <aside class="stats-panel">
+            <h2>Statistics</h2>
+            <div class="stat">
+                <span>Tick:</span>
+                <span class="stat-value" id="tick">0</span>
+            </div>
+            <div class="stat">
+                <span>Survivors Remaining:</span>
+                <span class="stat-value" id="survivors">0</span>
+            </div>
+            <div class="stat">
+                <span>Rescued:</span>
+                <span class="stat-value" id="rescued">0</span>
+            </div>
+            <div class="stat">
+                <span>Deaths:</span>
+                <span class="stat-value" id="deaths">0</span>
+            </div>
+            <div class="stat">
+                <span>Fires Extinguished:</span>
+                <span class="stat-value" id="fires">0</span>
+            </div>
+            <div class="stat">
+                <span>Roads Cleared:</span>
+                <span class="stat-value" id="roads">0</span>
+            </div>
+            <div class="stat">
+                <span>Energy Used:</span>
+                <span class="stat-value" id="energy">0</span>
+            </div>
+            
+            <div class="legend">
+                <h2>Legend</h2>
+                <div class="legend-item">
+                    <div class="legend-color drone"></div>
+                    <span>Drone (D)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color medic"></div>
+                    <span>Medic (M)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color truck"></div>
+                    <span>Truck (T)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color survivor"></div>
+                    <span>Survivor (S)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color hospital"></div>
+                    <span>Hospital (H)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color fire"></div>
+                    <span>Fire (F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color rubble"></div>
+                    <span>Rubble (R)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color depot"></div>
+                    <span>Depot (D)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color road"></div>
+                    <span>Road</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color building"></div>
+                    <span>Building</span>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="controls">
+            <button id="start-btn">Start Simulation</button>
+            <button id="pause-btn">Pause</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let simulationRunning = false;
+        let gridWidth = 20;
+        let gridHeight = 20;
+
+        // Connect to WebSocket server
+        function connectWebSocket() {
+            updateStatus('Connecting...', '#ff9800');
+            
+            try {
+                ws = new WebSocket('ws://127.0.0.1:8000');
+                
+                ws.onopen = function() {
+                    console.log('Connected to simulation server');
+                    updateStatus('Connected', '#4caf50');
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        updateSimulation(data);
+                    } catch (error) {
+                        console.error('Error parsing message:', error);
+                    }
+                };
+                
+                ws.onclose = function() {
+                    console.log('Disconnected from server');
+                    updateStatus('Disconnected', '#f44336');
+                    setTimeout(connectWebSocket, 2000);
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateStatus('Connection Error', '#ff9800');
+                };
+            } catch (error) {
+                console.error('WebSocket connection failed:', error);
+                updateStatus('Failed to connect', '#f44336');
+                setTimeout(connectWebSocket, 2000);
+            }
+        }
+
+        function updateStatus(message, color) {
+            const statusElem = document.getElementById('status');
+            const indicator = document.getElementById('status-indicator');
+            
+            statusElem.textContent = message;
+            statusElem.style.color = color;
+            
+            // Update indicator color
+            indicator.className = 'status-indicator';
+            if (color === '#4caf50') indicator.classList.add('status-connected');
+            else if (color === '#f44336') indicator.classList.add('status-disconnected');
+            else indicator.classList.add('status-connecting');
+        }
+
+        // Update simulation display with real data
+        function updateSimulation(data) {
+            // Update statistics
+            document.getElementById('tick').textContent = data.time || 0;
+            document.getElementById('survivors').textContent = data.survivors ? data.survivors.length : 0;
+            document.getElementById('rescued').textContent = data.metrics?.rescued || 0;
+            document.getElementById('deaths').textContent = data.metrics?.deaths || 0;
+            document.getElementById('fires').textContent = data.metrics?.fires_extinguished || 0;
+            document.getElementById('roads').textContent = data.metrics?.roads_cleared || 0;
+            document.getElementById('energy').textContent = data.metrics?.energy_used || 0;
+            
+            // Update grid dimensions if available
+            if (data.grid) {
+                gridWidth = data.grid.w || 20;
+                gridHeight = data.grid.h || 20;
+            }
+            
+            // Update grid with actual positions
+            updateGrid(data);
+        }
+
+        // Update grid with real simulation data
+        function updateGrid(data) {
+            const grid = document.getElementById('grid');
+            
+            // Update grid dimensions
+            grid.style.gridTemplateColumns = `repeat(${gridWidth}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${gridHeight}, 1fr)`;
+            
+            // Clear existing cells if dimensions changed
+            if (grid.children.length !== gridWidth * gridHeight) {
+                grid.innerHTML = '';
+                for (let i = 0; i < gridWidth * gridHeight; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    grid.appendChild(cell);
+                }
+            }
+            
+            // Reset all cells to road (default)
+            const cells = grid.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.className = 'cell road';
+                cell.textContent = '';
+            });
+            
+            // Mark different cell types
+            markCells(data.fires || [], 'fire', 'F');
+            markCells(data.rubble || [], 'rubble', 'R');
+            
+            // Mark hospitals
+            if (data.hospitals) {
+                data.hospitals.forEach(hospital => {
+                    markCell(hospital.pos[0], hospital.pos[1], 'hospital', 'H');
+                });
+            }
+            
+            // Mark depot
+            if (data.depot) {
+                markCell(data.depot[0], data.depot[1], 'depot', 'D');
+            }
+            
+            // Mark agents
+            if (data.agents) {
+                data.agents.forEach(agent => {
+                    if (agent.pos) {
+                        const type = agent.kind || 'agent';
+                        markCell(agent.pos[0], agent.pos[1], type, type.charAt(0).toUpperCase());
+                    }
+                });
+            }
+            
+            // Mark survivors
+            if (data.survivors) {
+                data.survivors.forEach(survivor => {
+                    if (survivor.pos) {
+                        markCell(survivor.pos[0], survivor.pos[1], 'survivor', 'S');
+                    }
+                });
+            }
+        }
+
+        function markCell(x, y, className, text) {
+            const grid = document.getElementById('grid');
+            const index = y * gridWidth + x;
+            if (index < grid.children.length) {
+                const cell = grid.children[index];
+                cell.className = 'cell ' + className;
+                cell.textContent = text;
+            }
+        }
+
+        function markCells(positions, className, text) {
+            positions.forEach(pos => {
+                markCell(pos[0], pos[1], className, text);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create initial grid
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < gridWidth * gridHeight; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell road';
+                grid.appendChild(cell);
+            }
+            
+            // Connect to WebSocket
+            connectWebSocket();
+            
+            // Add control buttons functionality
+            document.getElementById('start-btn').addEventListener('click', function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ action: 'start' }));
+                }
+            });
+            
+            document.getElementById('pause-btn').addEventListener('click', function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ action: 'pause' }));
+                }
+            });
+            
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ action: 'reset' }));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

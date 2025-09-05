@@ -1,0 +1,18 @@
+{
+  "experiment_id": "map_small_react_42_1234567890",
+  "map": "map_small",
+  "strategy": "react",
+  "seed": 42,
+  "ticks": 192,
+  "runtime_seconds": 14.5,
+  "rescued": 10,
+  "deaths": 2,
+  "avg_rescue_time": 27.5,
+  "fires_extinguished": 7,
+  "roads_cleared": 3,
+  "energy_used": 47,
+  "tool_calls": 14,
+  "invalid_json": 0,
+  "replans": 0,
+  "hospital_overflow_events": 2
+}

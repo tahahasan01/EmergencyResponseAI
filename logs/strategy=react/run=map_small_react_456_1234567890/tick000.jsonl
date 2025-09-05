@@ -1,0 +1,3 @@
+{"role": "system", "content": "Crisis response planning"}
+{"role": "user", "content": "Sample context"}
+{"role": "assistant", "content": "FINAL_JSON: {\"commands\": []}"}
